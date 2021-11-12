@@ -17,7 +17,7 @@ public:
 
     int time_per_move;
 
-    int perform_monte_carlo();
+    int perform_monte_carlo(int * time = nullptr);
     void play_move(uint16_t move);
     const uint8_t * get_board_state() const;
 };

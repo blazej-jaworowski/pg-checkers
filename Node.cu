@@ -1,32 +1,24 @@
 #include "Node.cuh"
 
-#include <thrust/reduce.h>
-
 void Node::simulation_step_cpu(Node *node, int game_count)
 {
     int result = 0;
+    thrust::random::minstd_rand rng;
     for (int i = 0; i < game_count; i++)
     {
-        result += node->game_state.simulate_game();
+        result += node->game_state.simulate_game(rng);
     }
     node->propagate_result(result, game_count * 2);
 }
 
-void run_simulation_step_0(GameState game_state, uint8_t * results, int game_count) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    if(index > game_count) return;
-
-    results[index] = game_state.simulate_game();
-}
-
-template<void(*F)(GameState, uint8_t*, int)>
-void Node::simulation_step_gpu<F>(Node *node, int game_count)
+__global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count)
 {
-    uint8_t * results;
-    cudaMalloc(&results, game_count);
-    F<<<game_count / 1024 + 1, 1024>>>(node->game_state, results, game_count);
-    int result = thrust::reduce(results, results + game_count, 0);
-    node->propagate_result(result, game_count * 2);
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index > game_count)
+        return;
+
+    thrust::random::minstd_rand rng(index);
+    results[index] = game_state.simulate_game(rng);
 }
 
 void Node::propagate_result(int white_points, int max_points)
@@ -61,16 +53,26 @@ Node::~Node()
             continue;
         delete children[i];
     }
+    if (parent == nullptr)
+        cudaFree(game_result_buffer);
 }
 
-Node::Node(void (*simulation_step)(Node *, int), int game_count) : simulation_step(simulation_step), game_count(game_count), game_state(), parent(nullptr)
+Node::Node(void (*simulation_step)(Node *, int), int game_count) : simulation_step(simulation_step),
+                                                                   game_count(game_count),
+                                                                   game_state(),
+                                                                   parent(nullptr)
 {
+    cudaMalloc(&game_result_buffer, game_count);
     memset(children, 0, sizeof(children));
     game_state.calculate_game_state();
     simulation_step(this, game_count);
 }
 
-Node::Node(Node *parent, uint16_t move) : simulation_step(parent->simulation_step), game_count(parent->game_count), game_state(parent->game_state), parent(parent), move(move)
+Node::Node(Node *parent, uint16_t move) : simulation_step(parent->simulation_step),
+                                          game_count(parent->game_count),
+                                          game_state(parent->game_state),
+                                          game_result_buffer(parent->game_result_buffer),
+                                          parent(parent), move(move)
 {
     memset(children, 0, sizeof(children));
     this->game_state.play_move(move);

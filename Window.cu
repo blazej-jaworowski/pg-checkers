@@ -26,7 +26,7 @@ Window::Window(int width, int height) : width(width), height(height)
     textures[3] = load_texture("white_king.bmp");
     textures[4] = load_texture("black_king.bmp");
 
-    engine_black = new Engine();
+    engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_0>, 10000);
     //    engine_black->time_per_move = 10;
     engine_white = new Engine();
     //    engine_white->time_per_move = 100;
@@ -61,8 +61,8 @@ void Window::thread_run(Window *window)
                     window->engine_black->play_move(move);
                     if (window->engine_white != nullptr)
                         window->engine_white->play_move(move);
-                    play_move(&window->game_state, move);
-                    calculate_game_state(&window->game_state);
+                    window->game_state.play_move(move);
+                    window->game_state.calculate_game_state();
                     window->push_custom_event();
                     print_move(move);
                 }
@@ -99,8 +99,8 @@ void Window::thread_run(Window *window)
                 window->engine_white->play_move(move);
                 if (window->engine_black != nullptr)
                     window->engine_black->play_move(move);
-                play_move(&window->game_state, move);
-                calculate_game_state(&window->game_state);
+                window->game_state.play_move(move);
+                window->game_state.calculate_game_state();
                 window->push_custom_event();
                 print_move(move);
             }
@@ -141,7 +141,7 @@ void Window::run()
                 break;
             chosen_piece_position_x = event.button.x;
             chosen_piece_position_y = event.button.y;
-            chosen_piece = xy_to_index(event.button.x / 64, event.button.y / 64);
+            chosen_piece = GameState::xy_to_index(event.button.x / 64, event.button.y / 64);
             if (game_state.board_state[chosen_piece] != 0)
                 moving = true;
             break;
@@ -157,17 +157,17 @@ void Window::run()
             moving = false;
             if ((event.button.x / 64 + event.button.y / 64) % 2 == 0)
                 break;
-            uint16_t move = create_move(chosen_piece,
-                                        xy_to_index(chosen_piece_position_x / 64,
-                                                    chosen_piece_position_y / 64));
-            if (!move_valid(&game_state, move))
+            uint16_t move = GameState::create_move(chosen_piece,
+                                                   GameState::xy_to_index(chosen_piece_position_x / 64,
+                                                                          chosen_piece_position_y / 64));
+            if (!game_state.move_valid(move))
                 break;
             if (engine_black != nullptr)
                 engine_black->play_move(move);
             if (engine_white != nullptr)
                 engine_white->play_move(move);
-            play_move(&game_state, move);
-            calculate_game_state(&game_state);
+            game_state.play_move(move);
+            game_state.calculate_game_state();
             print_move(move);
             std::cout << std::endl;
 
@@ -197,8 +197,8 @@ void Window::paint()
         if (moving && chosen_piece == i)
             continue;
 
-        rect.x = index_to_x(i) * 64;
-        rect.y = index_to_y(i) * 64;
+        rect.x = GameState::index_to_x(i) * 64;
+        rect.y = GameState::index_to_y(i) * 64;
 
         SDL_RenderCopy(renderer, textures[board_state[i]], &piece_rect, &rect);
     }
@@ -247,9 +247,9 @@ void Window::print_error(const std::string &error_message)
 
 void Window::print_move(uint16_t move)
 {
-    uint8_t from = get_from(move);
-    uint8_t to = get_to(move);
-    std::cout << index_to_x(from) << ", " << index_to_y(from) << " -> " << index_to_x(to) << ", " << index_to_y(to) << std::endl;
+    uint8_t from = GameState::get_from(move);
+    uint8_t to = GameState::get_to(move);
+    std::cout << GameState::index_to_x(from) << ", " << GameState::index_to_y(from) << " -> " << GameState::index_to_x(to) << ", " << GameState::index_to_y(to) << std::endl;
 }
 
 void Window::push_custom_event() const

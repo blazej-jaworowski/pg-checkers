@@ -2,6 +2,7 @@
 #define PG_MONTE_CARLO_CHECKERS_GAMESTATE_CUH
 
 #include <cstdint>
+#include <thrust/random.h>
 
 #define MAX_VALID_MOVES 128
 #define TURNS_UNTIL_DRAW 40
@@ -52,8 +53,9 @@ public:
     __host__ __device__ void calculate_game_state();
 
     __host__ __device__ int8_t simulate_game() const;
+    __host__ __device__ int8_t simulate_game(thrust::random::minstd_rand &rng) const;
 
-    GameState();
+    __host__ __device__ GameState();
 };
 
 

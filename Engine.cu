@@ -1,6 +1,9 @@
 #include <iostream>
 #include <chrono>
+
 #include "Engine.cuh"
+
+#include "Logger.cuh"
 
 uint16_t Engine::get_move()
 {
@@ -31,7 +34,10 @@ Engine::Engine(void (*simulation_step)(Node *, int), int game_count, int time_pe
                                                                                           time_per_move(time_per_move)
 {
     first_node = node;
-    perform_monte_carlo();
+    int time;
+    int steps = perform_monte_carlo(&time);
+    std::string method = node->simulation_step == Node::simulation_step_cpu ? "CPU" : "GPU";
+    Logger::save_record(method, game_count, time, steps);
 }
 
 Engine::~Engine()
@@ -39,7 +45,7 @@ Engine::~Engine()
     delete first_node;
 }
 
-int Engine::perform_monte_carlo()
+int Engine::perform_monte_carlo(int * time)
 {
     int step_count = 0;
     int loop_count = 0;
@@ -56,6 +62,8 @@ int Engine::perform_monte_carlo()
         }
         loop_count++;
     }
+    // std::cout << step_count << std::endl;
+    *time = dt;
     if(loop_count == 1) std::cerr << "Decision too long. (" << dt << "ms)\n";
     return step_count;
 }
