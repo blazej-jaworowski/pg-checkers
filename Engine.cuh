@@ -10,7 +10,7 @@ private:
     Node * first_node;
 public:
     Node * node;
-    explicit Engine(void(*simulation_step)(Node*) = Node::simulation_step_cpu, int time_per_move = 100);
+    explicit Engine(void(*simulation_step)(Node*, int) = Node::simulation_step_cpu, int game_count = 1, int time_per_move = 100);
     Engine(const Engine&);
     ~Engine();
     uint16_t get_move();

@@ -16,9 +16,13 @@ public:
     Node * children[MAX_VALID_MOVES];
     int child_count = 0;
 
-    void (*simulation_step)(Node*);
+    void (*simulation_step)(Node*, int);
+    int game_count;
 
-    static void simulation_step_cpu(Node * node);
+    static void simulation_step_cpu(Node * node, int game_count);
+
+    template<void(*F)(GameState, uint8_t*, int)>
+    static void simulation_step_gpu(Node * node, int game_count);
 
     void propagate_result(int white_points, int max_points);
     void expand();
@@ -26,7 +30,7 @@ public:
     Node * choose_child();
     int best_child_index();
 
-    explicit Node(void(*simulation_step)(Node*));
+    explicit Node(void(*simulation_step)(Node*, int), int game_count);
 
     Node(Node* parent, uint16_t move);
 
