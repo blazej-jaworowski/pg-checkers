@@ -25,11 +25,6 @@ Window::Window(int width, int height) : width(width), height(height)
     textures[2] = load_texture("black_man.bmp");
     textures[3] = load_texture("white_king.bmp");
     textures[4] = load_texture("black_king.bmp");
-
-    engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_0>, 10000);
-    //    engine_black->time_per_move = 10;
-    engine_white = new Engine();
-    //    engine_white->time_per_move = 100;
 }
 
 void Window::thread_run(Window *window)
@@ -113,7 +108,11 @@ void Window::thread_run(Window *window)
         window->condition_variable.wait(lock);
     }
     if (window->finished())
+    {
         std::cout << (window->result() == 1 ? "Draw!" : (window->result() == 0 ? "Black won!" : "White won!")) << std::endl;
+        std::cout << window->engine_black->total_time << ", "
+                  << window->engine_white->total_time << " (" << 1.0f * window->engine_black->total_time / window->engine_white->total_time << ")\n";
+    }
 }
 
 void Window::run()
@@ -273,4 +272,13 @@ bool Window::finished() const
 uint8_t Window::result() const
 {
     return game_state.result;
+}
+
+void Window::set_players(bool white_cpu, bool black_cpu) {
+    if(black_cpu) {
+        engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 1024 * 1024, 500);
+    }
+    if(white_cpu) {
+        engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 1024 * 1024, 500);
+    }
 }

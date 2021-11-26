@@ -2,6 +2,7 @@
 #define PG_MONTE_CARLO_CHECKERS_NODE_CUH
 
 #include "GameState.cuh"
+#include "Logger.cuh"
 
 #include <thrust/reduce.h>
 
@@ -22,14 +23,14 @@ public:
     void (*simulation_step)(Node *, int);
     int game_count;
 
-    uint8_t * game_result_buffer;
+    uint8_t *game_result_buffer;
 
     static void simulation_step_cpu(Node *node, int game_count);
 
     template <void (*F)(GameState, uint8_t *, int)>
     static void simulation_step_gpu(Node *node, int game_count)
     {
-        F<<<game_count / 1024 + 1, 1024>>>(node->game_state, node->game_result_buffer, game_count);
+        F<<<(game_count - 1) / 1024 + 1, 1024>>>(node->game_state, node->game_result_buffer, game_count);
         int result = thrust::reduce(thrust::device, node->game_result_buffer, node->game_result_buffer + game_count, 0);
         node->propagate_result(result, game_count * 2);
     }
@@ -50,5 +51,7 @@ public:
 };
 
 __global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count);
+
+__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count);
 
 #endif

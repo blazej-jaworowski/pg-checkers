@@ -21,6 +21,29 @@ __global__ void run_simulation_step_0(GameState game_state, uint8_t *results, in
     results[index] = game_state.simulate_game(rng);
 }
 
+// z jakiegos powodu wolniejsze
+__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count)
+{
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index > game_count)
+        return;
+
+
+    uint16_t move = game_state.valid_moves[(blockDim.x / 32 * blockIdx.x + threadIdx.x / 32) % game_state.valid_move_count];
+    game_state.play_move(move);
+    game_state.calculate_game_state();
+
+    thrust::random::minstd_rand rng(index);
+    while (!game_state.finished)
+    {
+        thrust::random::uniform_int_distribution<uint8_t> dist(0, game_state.valid_move_count - 1);
+        uint16_t move = game_state.valid_moves[dist(rng)];
+        game_state.play_move(move);
+        game_state.calculate_game_state();
+    }
+    results[index] = game_state.result;
+}
+
 void Node::propagate_result(int white_points, int max_points)
 {
     points += game_state.black_turn ? max_points - white_points : white_points;

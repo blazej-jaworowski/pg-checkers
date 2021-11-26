@@ -22,7 +22,12 @@ void Engine::play_move(uint16_t move)
         node->children[i] = nullptr;
     }
     node = node->children[chosen_node];
-    perform_monte_carlo();
+    auto start = std::chrono::high_resolution_clock::now();
+    perform_monte_carlo_timed(initial_time);
+    int time = std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::high_resolution_clock::now() - start)
+                   .count();
+    total_time += time;
 }
 
 const uint8_t *Engine::get_board_state() const
@@ -30,14 +35,19 @@ const uint8_t *Engine::get_board_state() const
     return node->game_state.board_state;
 }
 
-Engine::Engine(void (*simulation_step)(Node *, int), int game_count, int time_per_move) : node(new Node(simulation_step, game_count)),
-                                                                                          time_per_move(time_per_move)
+Engine::Engine(void (*simulation_step)(Node *, int), int game_count, int initial_time) : node(new Node(simulation_step, game_count)),
+                                                                                         initial_time(initial_time)
 {
     first_node = node;
-    int time;
-    int steps = perform_monte_carlo(&time);
-    std::string method = node->simulation_step == Node::simulation_step_cpu ? "CPU" : "GPU";
-    Logger::save_record(method, game_count, time, steps);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    steps_per_move = perform_monte_carlo_timed(initial_time);
+
+    int time = std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::high_resolution_clock::now() - start)
+                   .count();
+    total_time += time;
 }
 
 Engine::~Engine()
@@ -45,27 +55,31 @@ Engine::~Engine()
     delete first_node;
 }
 
-int Engine::perform_monte_carlo(int * time)
+int Engine::perform_monte_carlo_timed(int time)
 {
     int step_count = 0;
-    int loop_count = 0;
+    int min_steps =  node->game_state.valid_move_count - node->child_count;
     auto start = std::chrono::high_resolution_clock::now();
     int dt;
     while ((dt = std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::high_resolution_clock::now() - start)
-               .count()) <= time_per_move)
+                     std::chrono::high_resolution_clock::now() - start)
+                     .count()) <= time ||
+           step_count < min_steps)
     {
-        for (int i = 0; i < node->game_state.valid_move_count; i++)
-        {
-            node->step();
-            step_count++;
-        }
-        loop_count++;
+        node->step();
+        step_count++;
     }
-    // std::cout << step_count << std::endl;
-    *time = dt;
-    if(loop_count == 1) std::cerr << "Decision too long. (" << dt << "ms)\n";
+    if (step_count == min_steps)
+        std::cerr << "Decision too long. (" << dt << "ms)\n";
     return step_count;
 }
 
-Engine::Engine(const Engine &engine) : Engine(engine.node->simulation_step, engine.node->game_count, engine.time_per_move) {}
+void Engine::perform_monte_carlo_steps(int steps)
+{
+    for (int i = 0; i < steps || node->game_state.valid_move_count > node->child_count; i++)
+    {
+        node->step();
+    }
+}
+
+Engine::Engine(const Engine &engine) : Engine(engine.node->simulation_step, engine.node->game_count, engine.initial_time) {}

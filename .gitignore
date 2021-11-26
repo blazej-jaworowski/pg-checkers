@@ -1,4 +1,5 @@
 /cmake_builds/
 /.vscode/
-log
+log*
 notes
+.gitignore

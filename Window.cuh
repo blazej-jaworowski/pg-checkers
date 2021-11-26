@@ -50,6 +50,8 @@ public:
     bool finished() const;
     bool black_turn() const;
     uint8_t result() const;
+
+    void set_players(bool white_cpu, bool black_cpu);
 };
 
 

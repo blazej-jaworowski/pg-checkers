@@ -14,10 +14,14 @@ private:
     bool enabled = false;
 
     void open(std::string filename);
+
 public:
     ~Logger();
     static void init(std::string filename, std::string version);
-    static void save_record(std::string method, int game_count, int time, int steps);
+    static void save_record(std::string method, int game_count,
+                            unsigned long long time_memset,
+                            unsigned long long time_simulation,
+                            unsigned long long time_reduce);
 };
 
 #endif
