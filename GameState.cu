@@ -425,3 +425,28 @@ int8_t GameState::simulate_game(thrust::random::minstd_rand &rng) const
     }
     return copy.result;
 }
+
+uint16_t GameState::get_random_move() {
+    calculate_game_state();
+    if(valid_move_count == 0) return 0xFFFF;
+    uint16_t move = valid_moves[rand() % valid_move_count];
+    return move;
+}
+
+GameState GameState::get_random_state() {
+    GameState r;
+
+    int piece_count = rand() % 15 + 5;
+    while((r.black_piece_count >= piece_count || r.white_piece_count >= piece_count) && !r.finished) {
+        uint16_t move = r.get_random_move();
+        if(move == 0xFFFF) break;
+        r.play_move(move);
+    }
+    for(int i = 0; i < 5 && !r.finished; i++) {
+        uint16_t move = r.get_random_move();
+        if(move == 0xFFFF) break;
+        r.play_move(move);
+    }
+
+    return r;
+}

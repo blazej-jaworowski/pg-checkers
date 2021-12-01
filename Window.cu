@@ -274,11 +274,30 @@ uint8_t Window::result() const
     return game_state.result;
 }
 
-void Window::set_players(bool white_cpu, bool black_cpu) {
-    if(black_cpu) {
-        engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 1024 * 1024, 500);
+void Window::set_players(std::string white, std::string black)
+{
+    if (black == "gpu")
+    {
+        engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 4096, 500);
+        std::cout << "Black player: gpu" << std::endl;
     }
-    if(white_cpu) {
-        engine_black = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 1024 * 1024, 500);
+    else if (black == "cpu")
+    {
+        engine_black = new Engine(Node::simulation_step_cpu, 1, 500);
+        std::cout << "Black player: cpu" << std::endl;
+    } else {
+        std::cout << "Black player: human" << std::endl;
+    }
+    if (white == "gpu")
+    {
+        engine_white = new Engine(Node::simulation_step_gpu<run_simulation_step_1>, 4096, 500);
+        std::cout << "White player: gpu" << std::endl;
+    }
+    else if (white == "cpu")
+    {
+        std::cout << "White player: cpu" << std::endl;
+        engine_white = new Engine(Node::simulation_step_cpu, 1, 500);
+    } else {
+        std::cout << "White player: human" << std::endl;
     }
 }

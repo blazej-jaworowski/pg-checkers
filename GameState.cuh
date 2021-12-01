@@ -56,6 +56,9 @@ public:
     __host__ __device__ int8_t simulate_game(thrust::random::minstd_rand &rng) const;
 
     __host__ __device__ GameState();
+
+    uint16_t get_random_move();
+    static GameState get_random_state();
 };
 
 

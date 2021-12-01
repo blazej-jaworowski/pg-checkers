@@ -1,0 +1,11 @@
+v3,Release,run_simulation_step_1,4096,run_simulation_step_0,4096,50,0.8175
+v3,Release,run_simulation_step_1,4096,cpu,1,50,0.785
+v3,Release,run_simulation_step_1,4096,run_simulation_step_0,4096,100,0.7775
+v3,Release,run_simulation_step_1,4096,cpu,1,100,0.7925
+v3,Release,run_simulation_step_1,4096,run_simulation_step_0,4096,200,0.7875
+v3,Release,run_simulation_step_1,4096,cpu,1,200,0.7625
+v3,Release,run_simulation_step_1,4096,run_simulation_step_0,4096,400,0.8075
+v3,Release,run_simulation_step_1,4096,cpu,1,400,0.735
+v3,Release,run_simulation_step_0,4096,cpu,1,50,0.5825
+v3,Release,run_simulation_step_0,4096,cpu,1,100,0.4775
+v3,Release,run_simulation_step_0,4096,cpu,1,200,0.51

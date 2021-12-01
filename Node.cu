@@ -11,18 +11,18 @@ void Node::simulation_step_cpu(Node *node, int game_count)
     node->propagate_result(result, game_count * 2);
 }
 
-__global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count)
+__global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count, int seed)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index > game_count)
         return;
 
-    thrust::random::minstd_rand rng(index);
+    thrust::random::minstd_rand rng(seed + index);
     results[index] = game_state.simulate_game(rng);
 }
 
 // z jakiegos powodu wolniejsze
-__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count)
+__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count, int seed)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index > game_count)
@@ -33,7 +33,7 @@ __global__ void run_simulation_step_1(GameState game_state, uint8_t *results, in
     game_state.play_move(move);
     game_state.calculate_game_state();
 
-    thrust::random::minstd_rand rng(index);
+    thrust::random::minstd_rand rng(seed + index);
     while (!game_state.finished)
     {
         thrust::random::uniform_int_distribution<uint8_t> dist(0, game_state.valid_move_count - 1);

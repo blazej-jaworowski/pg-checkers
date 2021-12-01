@@ -51,7 +51,7 @@ public:
     bool black_turn() const;
     uint8_t result() const;
 
-    void set_players(bool white_cpu, bool black_cpu);
+    void set_players(std::string white, std::string black);
 };
 
 

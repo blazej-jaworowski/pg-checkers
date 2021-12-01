@@ -5,6 +5,7 @@
 #include "Logger.cuh"
 
 #include <thrust/reduce.h>
+#include <chrono>
 
 class Node
 {
@@ -27,10 +28,11 @@ public:
 
     static void simulation_step_cpu(Node *node, int game_count);
 
-    template <void (*F)(GameState, uint8_t *, int)>
+    template <void (*F)(GameState, uint8_t *, int, int)>
     static void simulation_step_gpu(Node *node, int game_count)
     {
-        F<<<(game_count - 1) / 1024 + 1, 1024>>>(node->game_state, node->game_result_buffer, game_count);
+        int seed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        F<<<(game_count - 1) / 1024 + 1, 1024>>>(node->game_state, node->game_result_buffer, game_count, seed);
         int result = thrust::reduce(thrust::device, node->game_result_buffer, node->game_result_buffer + game_count, 0);
         node->propagate_result(result, game_count * 2);
     }
@@ -50,8 +52,8 @@ public:
     int get_move_index(uint16_t child_move);
 };
 
-__global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count);
+__global__ void run_simulation_step_0(GameState game_state, uint8_t *results, int game_count, int seed);
 
-__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count);
+__global__ void run_simulation_step_1(GameState game_state, uint8_t *results, int game_count, int seed);
 
 #endif
